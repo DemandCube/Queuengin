@@ -10,23 +10,30 @@ import org.apache.zookeeper.server.ZooKeeperServerMain;
 import org.apache.zookeeper.server.quorum.QuorumPeerConfig;
 import org.apache.zookeeper.server.quorum.QuorumPeerConfig.ConfigException;
 import org.apache.zookeeper.server.quorum.QuorumPeerMain;
+import org.slf4j.Logger;
 
-import com.neverwinterdp.server.Server;
-import com.neverwinterdp.server.ServerRuntimeEnvironment;
-import com.neverwinterdp.server.config.ServiceConfig;
+import com.google.inject.Inject;
+import com.google.inject.name.Named;
+import com.neverwinterdp.server.RuntimeEnvironment;
 import com.neverwinterdp.server.service.AbstractService;
+import com.neverwinterdp.util.LoggerFactory;
 /**
  * @author Tuan Nguyen
  * @email  tuan08@gmail.com
  */
 public class ZookeeperClusterService extends AbstractService {
-  private ServerRuntimeEnvironment rtEnvironment ;
+  @Inject
+  private RuntimeEnvironment rtEnvironment ;
+  @Inject(optional = true) @Named("zookeeper.config-path")
+  private String zookeeperConfigPath ;
+  
+  private Logger logger ;
   private ZookeeperLaucher launcher ;
   private Thread zkThread ;
-  
-  public void onInit(Server server) {
-    super.onInit(server); 
-    rtEnvironment = server.getRuntimeEnvironment() ;
+
+  @Inject
+  public void init(LoggerFactory factory) {
+    logger = factory.getLogger(getClass().getSimpleName()) ;
   }
   
   public void start() {
@@ -37,8 +44,6 @@ public class ZookeeperClusterService extends AbstractService {
     zkThread = new Thread() {
       public void run() {
         try {
-          ServiceConfig config = getServiceConfig();
-          String zookeeperConfigPath = config.getParameter("zookeeperConfigPath", null) ;
           Properties zkProperties = new Properties();
           if(zookeeperConfigPath != null) {
             zkProperties.load(new FileInputStream(rtEnvironment.getConfigDir() + "/" + zookeeperConfigPath));
@@ -113,7 +118,6 @@ public class ZookeeperClusterService extends AbstractService {
 
     public void shutdown() {
       super.shutdown();
-    }
-    
+    } 
   }
 }

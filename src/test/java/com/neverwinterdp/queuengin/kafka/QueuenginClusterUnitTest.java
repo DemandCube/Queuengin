@@ -1,5 +1,7 @@
 package com.neverwinterdp.queuengin.kafka;
 
+import java.util.Properties;
+
 import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.BeforeClass;
@@ -8,10 +10,9 @@ import org.junit.Test;
 import com.neverwinterdp.message.Message;
 import com.neverwinterdp.message.SampleEvent;
 import com.neverwinterdp.queuengin.ReportMessageConsumerHandler;
-import com.neverwinterdp.queuengin.kafka.cluster.KafkaClusterService;
-import com.neverwinterdp.queuengin.kafka.cluster.ZookeeperClusterService;
+import com.neverwinterdp.queuengin.kafka.cluster.KafkaServiceModule;
+import com.neverwinterdp.queuengin.kafka.cluster.ZookeeperServiceModule;
 import com.neverwinterdp.server.Server;
-import com.neverwinterdp.server.ServerBuilder;
 import com.neverwinterdp.server.cluster.ClusterClient;
 import com.neverwinterdp.server.cluster.ClusterMember;
 import com.neverwinterdp.server.cluster.hazelcast.HazelcastClusterClient;
@@ -27,22 +28,33 @@ public class QueuenginClusterUnitTest {
     System.setProperty("log4j.configuration", "file:src/app/config/kafka/simple-log4j.properties") ;
   }
   
+  static String TOPIC = "Queuengin" ;
+  
   static protected Server      zkServer, kafkaServer ;
   static protected ClusterClient client ;
 
   @BeforeClass
   static public void setup() throws Exception {
     FileUtil.removeIfExist("build/cluster", false);
-    ServerBuilder zkBuilder = new ServerBuilder() ;
-    zkBuilder.addService(ZookeeperClusterService.class) ;
-    zkServer = zkBuilder.build();
+    Properties zkServerProps = new Properties() ;
+    zkServerProps.put("server.group", "NeverwinterDP") ;
+    zkServerProps.put("server.cluster-framework", "hazelcast") ;
+    zkServerProps.put("server.roles", "master") ;
+    zkServerProps.put("server.service-module", ZookeeperServiceModule.class.getName()) ;
+    //zkServerProps.put("zookeeper.config-path", "") ;
+    zkServer = Server.create(zkServerProps);
     
+    Properties kafkaServerProps = new Properties() ;
+    kafkaServerProps.put("server.group", "NeverwinterDP") ;
+    kafkaServerProps.put("server.cluster-framework", "hazelcast") ;
+    kafkaServerProps.put("server.roles", "master") ;
+    kafkaServerProps.put("server.service-module", KafkaServiceModule.class.getName()) ;
+    kafkaServerProps.put("kafka.zookeeper-urls", "127.0.0.1:2181") ;
+    kafkaServerProps.put("kafka.consumer-report.topic", TOPIC) ;
     
-    ServerBuilder kafkaBuilder = new ServerBuilder() ;
-    kafkaBuilder.addService(KafkaClusterService.class) ;
-    kafkaServer = kafkaBuilder.build();
+    kafkaServer = Server.create(kafkaServerProps);
     
-    ClusterMember member = zkServer.getCluster().getMember() ;
+    ClusterMember member = zkServer.getClusterService().getMember() ;
     String connectUrl = member.getIpAddress() + ":" + member.getPort() ;
     client = new HazelcastClusterClient(connectUrl) ;
     Thread.sleep(1000);
@@ -56,18 +68,17 @@ public class QueuenginClusterUnitTest {
   
   @Test
   public void testSendMessage() throws Exception {
-    String topic = "test-topic" ;
     int numOfMessages = 150 ;
     KafkaMessageProducer producer = new KafkaMessageProducer("127.0.0.1:9092") ;
     for(int i = 0 ; i < numOfMessages; i++) {
       SampleEvent event = new SampleEvent("event-" + i, "event " + i) ;
       Message jsonMessage = new Message("m" + i, event, false) ;
-      producer.send(topic,  jsonMessage) ;
+      producer.send(TOPIC,  jsonMessage) ;
     }
    
     ReportMessageConsumerHandler handler = new ReportMessageConsumerHandler() ;
     KafkaMessageConsumerConnector consumer = new KafkaMessageConsumerConnector("consumer", "127.0.0.1:2181") ;
-    consumer.consume(topic, handler, 1) ;
+    consumer.consume(TOPIC, handler, 1) ;
     Thread.sleep(2000) ;
     Assert.assertEquals(numOfMessages, handler.messageCount()) ;
   }
