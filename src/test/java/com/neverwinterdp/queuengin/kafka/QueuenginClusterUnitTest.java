@@ -25,7 +25,7 @@ public class QueuenginClusterUnitTest {
   static {
     System.setProperty("app.dir", "build/cluster") ;
     System.setProperty("app.config.dir", "src/app/config") ;
-    System.setProperty("log4j.configuration", "file:src/app/config/kafka/simple-log4j.properties") ;
+    System.setProperty("log4j.configuration", "file:src/app/config/kafka/log4j.properties") ;
   }
   
   static String TOPIC = "Queuengin" ;
@@ -50,8 +50,7 @@ public class QueuenginClusterUnitTest {
     kafkaServerProps.put("server.roles", "master") ;
     kafkaServerProps.put("server.service-module", KafkaServiceModule.class.getName()) ;
     kafkaServerProps.put("kafka.zookeeper-urls", "127.0.0.1:2181") ;
-    kafkaServerProps.put("kafka.consumer-report.topic", TOPIC) ;
-    
+    kafkaServerProps.put("kafka.consumer-report.topics", TOPIC) ;
     kafkaServer = Server.create(kafkaServerProps);
     
     ClusterMember member = zkServer.getClusterService().getMember() ;

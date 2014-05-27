@@ -75,13 +75,17 @@ def doRelease(String releaseDir) {
   }
 
   def jars = [ 
-    "lib.common", "test-framework",
-    "jackson-core-asl", "jackson-mapper-asl"
-
+    "commons.utils", "commons.api", "commons.cluster",
+    "jackson-core-asl", "jackson-mapper-asl", 'jcommander',
+    'guice', 'javax.inject', 'hazelcast', 'aopalliance',
+    "kafka", "scala-library",
+    'zookeeper', 'zkclient',
+    "metrics-core", "metrics-annotation",
+    "log4j", "slf4j-api", "slf4j-log4j12"
   ] 
 
   println "Patch kafka_2.8.0-0.8.1.1 with the additional library"
-  project(':sparkngin').configurations.compile.each { File file -> 
+  configurations.compile.each { File file -> 
     if(isIn(jars, file)) {
       println "  Copy $file.name to queuengin/libs"
       copy {

@@ -42,12 +42,12 @@ public class KafkaClusterService extends AbstractService {
   Properties loadKafkaProperties(String file) throws Exception {
     if(file == null) {
       Properties props = new Properties();
-      props.setProperty("hostname", "127.0.0.1");
+      //props.setProperty("hostname", "127.0.0.1");
       props.setProperty("port", "9092");
       props.setProperty("broker.id", Integer.toString(1));
       props.setProperty("auto.create.topics.enable", "true");
       props.setProperty("log.dirs", rtEnvironment.getDataDir() + "/server" + rtEnvironment.getServerId() + "/kafka");
-      props.setProperty("enable.zookeeper", "true");
+      //props.setProperty("enable.zookeeper", "true");
       props.setProperty("zookeeper.connect", "127.0.0.1:2181");
       return props ;
     } else {

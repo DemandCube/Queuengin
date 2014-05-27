@@ -11,18 +11,25 @@ import com.neverwinterdp.server.service.AbstractService;
  */
 public class KafkaConsumerTopicReportService extends AbstractService {
   private KafkaMessageConsumerConnector consumer ;
-  @Inject @Named("kafka.consumer-report.topic")
-  private String   topic ;
   
-  @Inject @Named("kafka.zookeeper-urls")
+  @Inject(optional=true) @Named("kafka.zookeeper-urls")
   private String zookeeperUrls = "127.0.0.1:2181";
   
+  private String[] topic = {} ;
+  
+  @Inject(optional = true)
+  public void setTopics(@Named("kafka.consumer-report.topics") String topics) {
+    this.topic = topics.split(",") ;
+  }
+  
   public void start() throws Exception {
-    String consumerGroup = "KafkaConsumerTopicReport." + topic;
+    String consumerGroup = "KafkaConsumerTopicReportService";
     int    numberOfThreads = 1 ;
     ReportMessageConsumerHandler handler = new ReportMessageConsumerHandler() ;
     consumer = new KafkaMessageConsumerConnector(consumerGroup, zookeeperUrls) ;
-    consumer.consume(topic, handler, numberOfThreads) ;
+    for(String selTopic : topic) {
+      consumer.consume(selTopic, handler, numberOfThreads) ;
+    }
   }
 
   public void stop() {
