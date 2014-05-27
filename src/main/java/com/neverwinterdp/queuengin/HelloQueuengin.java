@@ -1,5 +1,7 @@
 package com.neverwinterdp.queuengin;
 
+import com.beust.jcommander.JCommander;
+import com.beust.jcommander.Parameter;
 import com.neverwinterdp.message.Message;
 import com.neverwinterdp.message.SampleEvent;
 import com.neverwinterdp.queuengin.kafka.KafkaMessageConsumerConnector;
@@ -9,39 +11,61 @@ import com.neverwinterdp.queuengin.kafka.KafkaMessageProducer;
  * @email  tuan08@gmail.com
  */
 public class HelloQueuengin {
-  static int MODE_QUIET = 0 ;
-  static int MODE_VERBOSE = 1 ;
+  static public class Options {
+    @Parameter(
+      names = "-produce", 
+      description = "Produce the messages"
+    )
+    boolean produce = true ; 
+    
+    @Parameter(
+        names = "-consume", 
+        description = "Consume the messages"
+    )
+    boolean consume = true ;
+    
+    @Parameter(
+        names = "-topic", 
+        description = "topic name"
+    )
+    String topic = "HelloQueuengin";
+    
+    @Parameter(
+       names = "-zk-connect", 
+       description = "The list of the zookeeper server in fomat host:port, separate by comma"
+    )
+    String zkConnect = "127.0.0.1:2181";
+    
+    @Parameter(
+        names = "-kafka-connect", 
+        description = "The list of the kafka server in fomat host:port, separate by comma"
+    )
+    String kafkaConnect = "127.0.0.1:9092";
+    
+    @Parameter(
+        names = "-num-message", 
+        description = "The number of messages to be produced"
+    )
+    int numMessage = 50000;
+  }
   
   static public class HelloProducer implements Runnable {
-    String brokerList ;
-    int numOfMessages = 10 ;
-    String topic = "HelloQueuengin" ;
-    int mode = 1 ;
-    HelloProducer(String brokerList, String topic, int numOfMessages, int mode) {
-      this.brokerList = brokerList ;
-      this.topic = topic ;
-      this.numOfMessages = numOfMessages ;
-      this.mode = mode ;
+    Options opts ;
+    int     count ;
+    HelloProducer(Options options) {
+      this.opts = options ;
     }
     
     public void run() {
       try {
-        KafkaMessageProducer producer = new KafkaMessageProducer(brokerList) ;
-        for(int i = 0 ; i < numOfMessages; i++) {
+        KafkaMessageProducer producer = new KafkaMessageProducer(opts.kafkaConnect) ;
+        for(int i = 0 ; i < opts.numMessage; i++) {
           SampleEvent event = new SampleEvent("event-" + i, "Hello Queuengin " + i) ;
           Message jsonMessage = new Message("m" + i, event, false) ;
-          producer.send(topic,  jsonMessage) ;
-          if(mode == MODE_VERBOSE) {
-            System.out.println("Produce: " + event.getDescription()); 
-          } else {
-            if(i > 0 && i % 500 == 0) {
-              System.out.println("Produce " + i + " messages");
-            }
-          }
+          producer.send(opts.topic,  jsonMessage) ;
+          count++ ;
         }
-        if(mode != MODE_VERBOSE) {
-          System.out.println("Produce " + numOfMessages + " messages");
-        }
+        System.out.println("Produce " + opts.numMessage + " messages");
         producer.close();
       } catch(Exception ex) {
         ex.printStackTrace();
@@ -50,26 +74,17 @@ public class HelloQueuengin {
   }
   
   static public class HelloMessageConsumerHandler implements MessageConsumerHandler {
-    private int count =  0 ;
-    int mode = 1 ;
+    int count =  0 ;
+    Options opts ;
     
-    HelloMessageConsumerHandler(int mode) {
-      this.mode = mode ;
+    HelloMessageConsumerHandler(Options opts) {
+      this.opts = opts ;
     }
-    
-    public int messageCount() { return count ; }
     
     public void onMessage(Message jsonMessage) {
       count++ ;
       try {
         SampleEvent event = jsonMessage.getData().getDataAs(SampleEvent.class);
-        if(mode == MODE_VERBOSE) {
-          System.out.println("Consume: " + event.getDescription()); 
-        } else {
-          if(count % 500 == 0) {
-            System.out.println("Consume " + count + " messages");
-          }
-        }
       } catch (Exception e) {
         e.printStackTrace();
       }
@@ -79,57 +94,39 @@ public class HelloQueuengin {
     }
     
     public void close() {
-      if(mode != MODE_VERBOSE) {
-        System.out.println("Consume " + count + " messages");
-      }
+      System.out.println("Consume " + count + " messages");
     }
-  }
-  
-  static String getValue(String arg) {
-    String[] array = arg.split("=", 2) ;
-    return array[1] ;
   }
   
   static public void main(String[] args) throws Exception {
-    String topic = "HelloQueuengin" ;
-    int numOfMessages = 10000 ;
-    int mode = MODE_QUIET ;
-    String brokerList = "127.0.0.1:9092" ;
-    String zookeeperList = "127.0.0.1:2181" ;
-
-    System.out.println("Available options: ");
-    System.out.println("  --topic=hello");
-    System.out.println("  --num-of-messages=10");
-    System.out.println("  --booker-list=127.0.0.1:9092");
-    System.out.println("  --zookeeper-list=127.0.0.1:2181");
-    System.out.println("  --quiet or --verbose");
-    if(args != null) {
-      for(String arg : args) {
-        if(arg.startsWith("--topic")) topic = getValue(arg) ;
-        else if(arg.startsWith("--num-of-messages")) numOfMessages = Integer.parseInt(getValue(arg)) ;
-        else if(arg.startsWith("--broker-list")) brokerList = getValue(arg) ;
-        else if(arg.startsWith("--zookeeper-list")) zookeeperList = getValue(arg) ;
-        else if(arg.startsWith("--quiet")) mode = MODE_QUIET ;
-        else if(arg.startsWith("--verbose")) mode = MODE_VERBOSE ;
-        else {
-          System.out.println("Unknown option: " + arg);
-          return ;
-        }
-      }
+    Options options = new Options();
+    JCommander parser =new JCommander(options, args);
+    parser.usage() ;
+    
+    Thread producerThread = null ;
+    HelloProducer helloProducer = null ;
+    if(options.produce) {
+      helloProducer = new HelloProducer(options) ;
+      producerThread = new Thread(helloProducer) ;
+      producerThread.start(); 
     }
     
-    HelloProducer helloProducer = 
-        new HelloProducer(brokerList, topic, numOfMessages, mode) ;
-    Thread producerThread = new Thread(helloProducer) ;
-    producerThread.start(); 
-   
-    HelloMessageConsumerHandler  handler = new HelloMessageConsumerHandler(mode) ;
+    HelloMessageConsumerHandler  handler = new HelloMessageConsumerHandler(options) ;
     KafkaMessageConsumerConnector consumer = 
-        new KafkaMessageConsumerConnector("consumer", zookeeperList) ;
-    consumer.consume(topic, handler, 1) ;
-    while(producerThread.isAlive()) {
+        new KafkaMessageConsumerConnector("consumer", options.zkConnect) ;
+    consumer.consume(options.topic, handler, 1) ;
+    
+    int lastConsume = -1;
+    long startTime = System.currentTimeMillis() ;
+    while(true) {
       Thread.sleep(1000);
+      int produce = helloProducer != null ? helloProducer.count : 0 ;
+      int consume = handler != null ? handler.count : 0 ;
+      System.out.println("Produce = " + produce + ", Consume = " + consume + " in " + (System.currentTimeMillis() - startTime) + "ms");
+      if(lastConsume == consume) break ;
+      lastConsume = consume ;
     }
+    
     handler.close(); 
     consumer.close();
     System.exit(0);
