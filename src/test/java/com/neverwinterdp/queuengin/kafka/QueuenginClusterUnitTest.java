@@ -40,7 +40,9 @@ public class QueuenginClusterUnitTest {
     zkServerProps.put("server.group", "NeverwinterDP") ;
     zkServerProps.put("server.cluster-framework", "hazelcast") ;
     zkServerProps.put("server.roles", "master") ;
-    zkServerProps.put("server.service-module", ZookeeperServiceModule.class.getName()) ;
+    zkServerProps.put("server.available-modules", ZookeeperServiceModule.class.getName()) ;
+    zkServerProps.put("server.install-modules", ZookeeperServiceModule.class.getName()) ;
+    zkServerProps.put("server.install-modules-autostart", "true") ;
     //zkServerProps.put("zookeeper.config-path", "") ;
     zkServer = Server.create(zkServerProps);
     
@@ -48,14 +50,14 @@ public class QueuenginClusterUnitTest {
     kafkaServerProps.put("server.group", "NeverwinterDP") ;
     kafkaServerProps.put("server.cluster-framework", "hazelcast") ;
     kafkaServerProps.put("server.roles", "master") ;
-    kafkaServerProps.put("server.service-module", KafkaServiceModule.class.getName()) ;
+    kafkaServerProps.put("server.available-modules", KafkaServiceModule.class.getName()) ;
+    kafkaServerProps.put("server.install-modules", KafkaServiceModule.class.getName()) ;
+    kafkaServerProps.put("server.install-modules-autostart", "true") ;
     kafkaServerProps.put("kafka.zookeeper-urls", "127.0.0.1:2181") ;
     kafkaServerProps.put("kafka.consumer-report.topics", TOPIC) ;
     kafkaServer = Server.create(kafkaServerProps);
     
-    ClusterMember member = zkServer.getClusterService().getMember() ;
-    String connectUrl = member.getIpAddress() + ":" + member.getPort() ;
-    client = new HazelcastClusterClient(connectUrl) ;
+    client = new HazelcastClusterClient() ;
     Thread.sleep(1000);
   }
 

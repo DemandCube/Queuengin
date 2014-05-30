@@ -23,7 +23,9 @@ public class ZookeeperServer {
       properties.put("server.group", "NeverwinterDP") ;
       properties.put("server.cluster-framework", "hazelcast") ;
       properties.put("server.roles", "master") ;
-      properties.put("server.service-module", ZookeeperServiceModule.class.getName()) ;
+      properties.put("server.available-modules", ZookeeperServiceModule.class.getName()) ;
+      properties.put("server.install-modules", ZookeeperServiceModule.class.getName()) ;
+      properties.put("server.install-modules-autostart", "true") ;
     }
     //zkServerProps.put("zookeeper.config-path", "") ;
     Server zkServer = Server.create(properties);

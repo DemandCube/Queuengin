@@ -32,7 +32,9 @@ public class KafkaServer {
       properties.put("server.group", "NeverwinterDP") ;
       properties.put("server.cluster-framework", "hazelcast") ;
       properties.put("server.roles", "master") ;
-      properties.put("server.service-module", KafkaServiceModule.class.getName()) ;
+      properties.put("server.available-modules", KafkaServiceModule.class.getName()) ;
+      properties.put("server.install-modules", KafkaServiceModule.class.getName()) ;
+      properties.put("server.install-modules-autostart", "true") ;
       properties.put("kafka.zookeeper-urls", "127.0.0.1:2181") ;
     }
     //zkServerProps.put("zookeeper.config-path", "") ;

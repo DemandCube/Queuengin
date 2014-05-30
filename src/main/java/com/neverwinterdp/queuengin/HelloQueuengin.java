@@ -100,7 +100,7 @@ public class HelloQueuengin {
   
   static public void main(String[] args) throws Exception {
     Options options = new Options();
-    JCommander parser =new JCommander(options, args);
+    JCommander parser = new JCommander(options, args);
     parser.usage() ;
     
     Thread producerThread = null ;
@@ -115,7 +115,7 @@ public class HelloQueuengin {
     KafkaMessageConsumerConnector consumer = 
         new KafkaMessageConsumerConnector("consumer", options.zkConnect) ;
     consumer.consume(options.topic, handler, 1) ;
-    
+    Thread.sleep(1000);
     int lastConsume = -1;
     long startTime = System.currentTimeMillis() ;
     while(true) {
