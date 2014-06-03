@@ -1,9 +1,9 @@
-package com.neverwinterdp.queuengin;
+package com.neverwinterdp.server.shell;
 
-import com.beust.jcommander.JCommander;
 import com.beust.jcommander.Parameter;
 import com.neverwinterdp.message.Message;
 import com.neverwinterdp.message.SampleEvent;
+import com.neverwinterdp.queuengin.MessageConsumerHandler;
 import com.neverwinterdp.queuengin.kafka.KafkaMessageConsumerConnector;
 import com.neverwinterdp.queuengin.kafka.KafkaMessageProducer;
 /**
@@ -98,11 +98,7 @@ public class HelloQueuengin {
     }
   }
   
-  static public void main(String[] args) throws Exception {
-    Options options = new Options();
-    JCommander parser =new JCommander(options, args);
-    parser.usage() ;
-    
+  public void run(Options options) throws Exception {
     Thread producerThread = null ;
     HelloProducer helloProducer = null ;
     if(options.produce) {
@@ -115,7 +111,7 @@ public class HelloQueuengin {
     KafkaMessageConsumerConnector consumer = 
         new KafkaMessageConsumerConnector("consumer", options.zkConnect) ;
     consumer.consume(options.topic, handler, 1) ;
-    
+    Thread.sleep(1000);
     int lastConsume = -1;
     long startTime = System.currentTimeMillis() ;
     while(true) {
@@ -129,6 +125,5 @@ public class HelloQueuengin {
     
     handler.close(); 
     consumer.close();
-    System.exit(0);
   }
 }
