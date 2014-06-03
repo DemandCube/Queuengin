@@ -1,7 +1,5 @@
 package com.neverwinterdp.queuengin.kafka;
 
-import java.util.Properties;
-
 import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.BeforeClass;
@@ -10,12 +8,8 @@ import org.junit.Test;
 import com.neverwinterdp.message.Message;
 import com.neverwinterdp.message.SampleEvent;
 import com.neverwinterdp.queuengin.ReportMessageConsumerHandler;
-import com.neverwinterdp.queuengin.kafka.cluster.KafkaServiceModule;
-import com.neverwinterdp.queuengin.kafka.cluster.ZookeeperServiceModule;
 import com.neverwinterdp.server.Server;
-import com.neverwinterdp.server.cluster.ClusterClient;
-import com.neverwinterdp.server.cluster.ClusterMember;
-import com.neverwinterdp.server.cluster.hazelcast.HazelcastClusterClient;
+import com.neverwinterdp.server.shell.Shell;
 import com.neverwinterdp.util.FileUtil;
 /**
  * @author Tuan Nguyen
@@ -25,51 +19,43 @@ public class QueuenginClusterUnitTest {
   static {
     System.setProperty("app.dir", "build/cluster") ;
     System.setProperty("app.config.dir", "src/app/config") ;
-    System.setProperty("log4j.configuration", "file:src/app/config/kafka/log4j.properties") ;
+    System.setProperty("log4j.configuration", "file:src/app/config/log4j.properties") ;
   }
   
   static String TOPIC = "Queuengin" ;
   
-  static protected Server      zkServer, kafkaServer ;
-  static protected ClusterClient client ;
+  static protected Server  zkServer, kafkaServer ;
+  static protected Shell   shell ;
 
   @BeforeClass
   static public void setup() throws Exception {
     FileUtil.removeIfExist("build/cluster", false);
-    Properties zkServerProps = new Properties() ;
-    zkServerProps.put("server.group", "NeverwinterDP") ;
-    zkServerProps.put("server.cluster-framework", "hazelcast") ;
-    zkServerProps.put("server.roles", "master") ;
-    zkServerProps.put("server.available-modules", ZookeeperServiceModule.class.getName()) ;
-    zkServerProps.put("server.install-modules", ZookeeperServiceModule.class.getName()) ;
-    zkServerProps.put("server.install-modules-autostart", "true") ;
-    //zkServerProps.put("zookeeper.config-path", "") ;
-    zkServer = Server.create(zkServerProps);
+    zkServer = Server.create("-Pserver.name=zookeeper", "-Pserver.roles=zookeeper") ;
+    kafkaServer = Server.create("-Pserver.name=kafka", "-Pserver.roles=kafka") ;
     
-    Properties kafkaServerProps = new Properties() ;
-    kafkaServerProps.put("server.group", "NeverwinterDP") ;
-    kafkaServerProps.put("server.cluster-framework", "hazelcast") ;
-    kafkaServerProps.put("server.roles", "master") ;
-    kafkaServerProps.put("server.available-modules", KafkaServiceModule.class.getName()) ;
-    kafkaServerProps.put("server.install-modules", KafkaServiceModule.class.getName()) ;
-    kafkaServerProps.put("server.install-modules-autostart", "true") ;
-    kafkaServerProps.put("kafka.zookeeper-urls", "127.0.0.1:2181") ;
-    kafkaServerProps.put("kafka.consumer-report.topics", TOPIC) ;
-    kafkaServer = Server.create(kafkaServerProps);
-    
-    client = new HazelcastClusterClient() ;
+    shell = new Shell() ;
+    shell.getShellContext().connect();
+    shell.execute("module list --available");
     Thread.sleep(1000);
   }
 
   @AfterClass
   static public void teardown() throws Exception {
-    client.shutdown(); 
-    zkServer.exit(0) ;
+    shell.close() ; 
+    kafkaServer.destroy();
+    zkServer.destroy();
   }
   
   @Test
   public void testSendMessage() throws Exception {
-    int numOfMessages = 150 ;
+    doTestSendMessage() ;
+    System.out.println("\n\n**********************************************************\n\n");
+    doTestSendMessage() ;
+  }
+  
+  void doTestSendMessage() throws Exception {
+    install() ;
+    int numOfMessages = 10 ;
     KafkaMessageProducer producer = new KafkaMessageProducer("127.0.0.1:9092") ;
     for(int i = 0 ; i < numOfMessages; i++) {
       SampleEvent event = new SampleEvent("event-" + i, "event " + i) ;
@@ -82,5 +68,34 @@ public class QueuenginClusterUnitTest {
     consumer.consume(TOPIC, handler, 1) ;
     Thread.sleep(2000) ;
     Assert.assertEquals(numOfMessages, handler.messageCount()) ;
+    producer.close();
+    consumer.close() ;
+    uninstall() ;
+  }
+  
+  private void install() throws InterruptedException {
+    String installScript =
+        "module install " + 
+        " -Pmodule.data.drop=true" +
+        " -Pzk:clientPort=2181 " +
+        " --member-role zookeeper --autostart Zookeeper \n" +
+        
+        "module install " +
+        " -Pmodule.data.drop=true" +
+        
+        " -Pkafka:port=9092 -Pkafka:zookeeper.connect=127.0.0.1:2181 " +
+        
+        " -Pkafka.zookeeper-urls=127.0.0.1:2181" +
+        " -Pkafka.consumer-report.topics=" + TOPIC +
+        "  --member-role kafka --autostart Kafka";
+      shell.executeScript(installScript);
+      Thread.sleep(1000);
+  }
+  
+  void uninstall() {
+    String uninstallScript = 
+        "module uninstall --member-role zookeeper --timeout 20000 Kafka \n" +
+        "module uninstall --member-role kafka --timeout 20000 Zookeeper";
+    shell.executeScript(uninstallScript);
   }
 }

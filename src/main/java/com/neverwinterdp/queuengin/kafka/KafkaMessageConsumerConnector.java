@@ -76,6 +76,7 @@ public class KafkaMessageConsumerConnector implements MessageConsumerConnector {
   }
   
   public void close() {
+    executorService.shutdown() ;
     consumer.shutdown(); 
   }
   
