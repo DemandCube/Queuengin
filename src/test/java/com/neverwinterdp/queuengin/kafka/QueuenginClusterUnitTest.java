@@ -7,10 +7,13 @@ import org.junit.Test;
 
 import com.neverwinterdp.message.Message;
 import com.neverwinterdp.message.SampleEvent;
-import com.neverwinterdp.queuengin.ReportMessageConsumerHandler;
+import com.neverwinterdp.queuengin.MetricsConsumerHandler;
 import com.neverwinterdp.server.Server;
 import com.neverwinterdp.server.shell.Shell;
 import com.neverwinterdp.util.FileUtil;
+import com.neverwinterdp.util.JSONSerializer;
+import com.neverwinterdp.util.monitor.ApplicationMonitor;
+import com.neverwinterdp.util.monitor.ComponentMonitor;
 /**
  * @author Tuan Nguyen
  * @email  tuan08@gmail.com
@@ -55,12 +58,14 @@ public class QueuenginClusterUnitTest {
   
   void doTestSendMessage() throws Exception {
     install() ;
-    ReportMessageConsumerHandler handler = new ReportMessageConsumerHandler() ;
+    ApplicationMonitor appMonitor = new ApplicationMonitor("Test", "localhost") ;
+    MetricsConsumerHandler handler = new MetricsConsumerHandler("Kafka", appMonitor) ;
     KafkaMessageConsumerConnector consumer = new KafkaMessageConsumerConnector("consumer", "127.0.0.1:2181") ;
     consumer.consume(TOPIC, handler, 1) ;
     
-    int numOfMessages = 10 ;
-    KafkaMessageProducer producer = new KafkaMessageProducer("127.0.0.1:9092") ;
+    int numOfMessages = 25000 ;
+    ComponentMonitor producerMonitor = appMonitor.createComponentMonitor("KafkaMessageProducer") ;
+    KafkaMessageProducer producer = new KafkaMessageProducer(producerMonitor, "127.0.0.1:9092") ;
     for(int i = 0 ; i < numOfMessages; i++) {
       SampleEvent event = new SampleEvent("event-" + i, "event " + i) ;
       Message message = new Message("m" + i, event, false) ;
@@ -70,8 +75,9 @@ public class QueuenginClusterUnitTest {
     
     Thread.sleep(2000) ;
     Assert.assertEquals(numOfMessages, handler.messageCount()) ;
+    System.out.println(JSONSerializer.INSTANCE.toString(appMonitor.snapshot()));
     //TODO: problem with consumer shutdown it seems the process is hang for 
-    //awhile and produce the exception
+    //awhile and produce the exception, it seems the hang problem occurs on jdk1.8 MAC OS
     consumer.close() ;
     producer.close();
     uninstall() ;
