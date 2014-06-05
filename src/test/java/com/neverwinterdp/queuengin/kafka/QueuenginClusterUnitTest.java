@@ -94,8 +94,8 @@ public class QueuenginClusterUnitTest {
   
   void uninstall() {
     String uninstallScript = 
-        "module uninstall --member-role zookeeper --timeout 20000 Kafka \n" +
-        "module uninstall --member-role kafka --timeout 20000 Zookeeper";
+        "module uninstall --member-role kafka --timeout 20000 Kafka \n" +
+        "module uninstall --member-role zookeeper --timeout 20000 Zookeeper";
     shell.executeScript(uninstallScript);
   }
 }
