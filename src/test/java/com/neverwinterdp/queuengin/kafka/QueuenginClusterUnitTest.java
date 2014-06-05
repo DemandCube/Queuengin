@@ -22,7 +22,7 @@ public class QueuenginClusterUnitTest {
     System.setProperty("log4j.configuration", "file:src/app/config/log4j.properties") ;
   }
   
-  static String TOPIC = "Queuengin" ;
+  static String TOPIC = "metrics.consumer" ;
   
   static protected Server  zkServer, kafkaServer ;
   static protected Shell   shell ;
@@ -55,21 +55,25 @@ public class QueuenginClusterUnitTest {
   
   void doTestSendMessage() throws Exception {
     install() ;
+    ReportMessageConsumerHandler handler = new ReportMessageConsumerHandler() ;
+    KafkaMessageConsumerConnector consumer = new KafkaMessageConsumerConnector("consumer", "127.0.0.1:2181") ;
+    consumer.consume(TOPIC, handler, 1) ;
+    
     int numOfMessages = 10 ;
     KafkaMessageProducer producer = new KafkaMessageProducer("127.0.0.1:9092") ;
     for(int i = 0 ; i < numOfMessages; i++) {
       SampleEvent event = new SampleEvent("event-" + i, "event " + i) ;
-      Message jsonMessage = new Message("m" + i, event, false) ;
-      producer.send(TOPIC,  jsonMessage) ;
+      Message message = new Message("m" + i, event, false) ;
+      producer.send(TOPIC,  message) ;
     }
    
-    ReportMessageConsumerHandler handler = new ReportMessageConsumerHandler() ;
-    KafkaMessageConsumerConnector consumer = new KafkaMessageConsumerConnector("consumer", "127.0.0.1:2181") ;
-    consumer.consume(TOPIC, handler, 1) ;
+    
     Thread.sleep(2000) ;
     Assert.assertEquals(numOfMessages, handler.messageCount()) ;
-    producer.close();
+    //TODO: problem with consumer shutdown it seems the process is hang for 
+    //awhile and produce the exception
     consumer.close() ;
+    producer.close();
     uninstall() ;
   }
   
@@ -86,16 +90,15 @@ public class QueuenginClusterUnitTest {
         " -Pkafka:port=9092 -Pkafka:zookeeper.connect=127.0.0.1:2181 " +
         
         " -Pkafka.zookeeper-urls=127.0.0.1:2181" +
-        " -Pkafka.consumer-report.topics=" + TOPIC +
-        "  --member-role kafka --autostart Kafka";
+        " --member-role kafka --autostart Kafka";
       shell.executeScript(installScript);
       Thread.sleep(1000);
   }
   
   void uninstall() {
     String uninstallScript = 
-        "module uninstall --member-role zookeeper --timeout 20000 Kafka \n" +
-        "module uninstall --member-role kafka --timeout 20000 Zookeeper";
+        "module uninstall --member-role kafka --timeout 40000 Kafka \n" +
+        "module uninstall --member-role zookeeper --timeout 20000 Zookeeper";
     shell.executeScript(uninstallScript);
   }
 }

@@ -42,7 +42,7 @@ public class KafkaMessageConsumerConnector implements MessageConsumerConnector {
     props.put("zookeeper.session.timeout.ms", "400");
     props.put("zookeeper.sync.time.ms", "200");
     props.put("auto.commit.interval.ms", "1000");
-    //props.put("auto.commit.enable", "false");
+    props.put("auto.commit.enable", "true");
     props.put("auto.offset.reset", "smallest");
     
     executorService = Executors.newFixedThreadPool(numOfThreads);
@@ -59,7 +59,7 @@ public class KafkaMessageConsumerConnector implements MessageConsumerConnector {
     TopicMessageConsumer[] consumer = new TopicMessageConsumer[streams.size()] ;
     for (int i = 0; i < streams.size(); i++) {
       KafkaStream<byte[], byte[]> stream = streams.get(i) ;
-      consumer[i] = new TopicMessageConsumer(handler, stream) ; 
+      consumer[i] = new TopicMessageConsumer(topic, handler, stream) ; 
       executorService.submit(consumer[i]);
     }
     
@@ -76,16 +76,18 @@ public class KafkaMessageConsumerConnector implements MessageConsumerConnector {
   }
   
   public void close() {
-    executorService.shutdown() ;
-    consumer.shutdown(); 
+    executorService.shutdownNow() ;
+    consumer.shutdown();
   }
   
   static public class TopicMessageConsumer implements Runnable {
+    private String topic ;
     private MessageConsumerHandler handler ;
     private KafkaStream<byte[], byte[]> stream;
     private boolean terminate ;
     
-    public TopicMessageConsumer(MessageConsumerHandler handler, KafkaStream<byte[], byte[]> stream) {
+    public TopicMessageConsumer(String topic, MessageConsumerHandler handler, KafkaStream<byte[], byte[]> stream) {
+      this.topic = topic ;
       this.handler = handler ;
       this.stream = stream;
     }
