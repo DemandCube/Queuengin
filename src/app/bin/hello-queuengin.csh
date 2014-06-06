@@ -32,13 +32,14 @@ server registration
 :echo "=======================================--"
 kafka hello -topic Hello -num-message 50000
 
-:echo "Uninstall Kafka server on the kafka role servers"
-:echo "================================================"
-module uninstall --member-role zookeeper --timeout 20000 Zookeeper
 
-:echo "Uninstall Zookeeper server on the zookeeper role servers"
+:echo "Uninstall Kafka module on the kafka role servers"
 :echo "========================================================"
 module uninstall --member-role kafka --timeout 20000 Kafka
+
+:echo "Uninstall Zookeeper module on the zookeeper role servers"
+:echo "================================================"
+module uninstall --member-role zookeeper --timeout 20000 Zookeeper
 
 :echo "list the server and services registration after uninstall kafka and zookeeper service"
 :echo "====================================================================================="
