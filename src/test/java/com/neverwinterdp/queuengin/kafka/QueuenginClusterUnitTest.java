@@ -88,7 +88,7 @@ public class QueuenginClusterUnitTest {
         "module install " + 
         " -Pmodule.data.drop=true" +
         " -Pzk:clientPort=2181 " +
-        " --member-role zookeeper --autostart Zookeeper \n" +
+        " --member-role zookeeper --autostart --module Zookeeper \n" +
         
         "module install " +
         " -Pmodule.data.drop=true" +
@@ -96,15 +96,15 @@ public class QueuenginClusterUnitTest {
         " -Pkafka:port=9092 -Pkafka:zookeeper.connect=127.0.0.1:2181 " +
         
         " -Pkafka.zookeeper-urls=127.0.0.1:2181" +
-        " --member-role kafka --autostart Kafka";
+        " --member-role kafka --autostart --module Kafka";
       shell.executeScript(installScript);
       Thread.sleep(1000);
   }
   
   void uninstall() {
     String uninstallScript = 
-        "module uninstall --member-role kafka --timeout 40000 Kafka \n" +
-        "module uninstall --member-role zookeeper --timeout 20000 Zookeeper";
+        "module uninstall --member-role kafka --timeout 40000 --module Kafka \n" +
+        "module uninstall --member-role zookeeper --timeout 20000 --module Zookeeper";
     shell.executeScript(uninstallScript);
   }
 }
