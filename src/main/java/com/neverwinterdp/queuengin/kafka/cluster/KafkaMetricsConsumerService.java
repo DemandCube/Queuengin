@@ -8,6 +8,7 @@ import com.neverwinterdp.message.Message;
 import com.neverwinterdp.queuengin.MessageConsumerHandler;
 import com.neverwinterdp.queuengin.MetricsConsumerHandler;
 import com.neverwinterdp.queuengin.kafka.KafkaMessageConsumerConnector;
+import com.neverwinterdp.server.cluster.ClusterService;
 import com.neverwinterdp.server.service.AbstractService;
 import com.neverwinterdp.util.LoggerFactory;
 import com.neverwinterdp.util.monitor.ApplicationMonitor;
@@ -24,7 +25,7 @@ public class KafkaMetricsConsumerService extends AbstractService implements Comp
   private KafkaMessageConsumerConnector consumer ;
   private MessageConsumerHandler metricsHandler ;
   
-  @Inject(optional=true) @Named("kafka.zookeeper-urls")
+  @Inject(optional=true) @Named("kafka:zookeeper.connect")
   private String zookeeperUrls = "127.0.0.1:2181";
   
   private String[] topic = { "metrics.consumer" } ;
@@ -35,13 +36,14 @@ public class KafkaMetricsConsumerService extends AbstractService implements Comp
     logger = factory.getLogger(getClass()) ;
   }
   
-  public ComponentMonitor getComponentMonitor() { return serviceMonitor ; }
-  
   @Inject
   public void init(ApplicationMonitor appMonitor) {
     metricsHandler = new MetricsConsumerHandler("Kafka", appMonitor) ;
     this.serviceMonitor = appMonitor.createComponentMonitor("Kafka", getClass().getSimpleName()) ;
   }
+  
+
+  public ComponentMonitor getComponentMonitor() { return serviceMonitor ; }
   
   public void start() throws Exception {
     String consumerGroup = "metrics.consumer";

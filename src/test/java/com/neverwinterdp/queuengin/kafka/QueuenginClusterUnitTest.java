@@ -38,7 +38,7 @@ public class QueuenginClusterUnitTest {
     
     shell = new Shell() ;
     shell.getShellContext().connect();
-    shell.execute("module list --available");
+    shell.execute("module list --type available");
     Thread.sleep(1000);
   }
 
@@ -94,8 +94,7 @@ public class QueuenginClusterUnitTest {
         " -Pmodule.data.drop=true" +
         
         " -Pkafka:port=9092 -Pkafka:zookeeper.connect=127.0.0.1:2181 " +
-        
-        " -Pkafka.zookeeper-urls=127.0.0.1:2181" +
+
         " --member-role kafka --autostart --module Kafka";
       shell.executeScript(installScript);
       Thread.sleep(1000);
