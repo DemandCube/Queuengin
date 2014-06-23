@@ -15,10 +15,12 @@ import kafka.consumer.KafkaStream;
 import kafka.javaapi.consumer.ConsumerConnector;
 import kafka.message.MessageAndMetadata;
 
+import com.codahale.metrics.Timer;
 import com.neverwinterdp.message.Message;
 import com.neverwinterdp.queuengin.MessageConsumerConnector;
 import com.neverwinterdp.queuengin.MessageConsumerHandler;
 import com.neverwinterdp.util.JSONSerializer;
+import com.neverwinterdp.util.monitor.ComponentMonitor;
 /**
  * @author Tuan Nguyen
  * @email  tuan08@gmail.com
@@ -39,10 +41,10 @@ public class KafkaMessageConsumerConnector implements MessageConsumerConnector {
     Properties props = new Properties();
     props.put("group.id", group);
     props.put("zookeeper.connect", zkConnectUrls);
-    props.put("zookeeper.session.timeout.ms", "400");
+    props.put("zookeeper.session.timeout.ms", "3000");
     props.put("zookeeper.sync.time.ms", "200");
     props.put("auto.commit.interval.ms", "1000");
-    //props.put("auto.commit.enable", "false");
+    props.put("auto.commit.enable", "true");
     props.put("auto.offset.reset", "smallest");
     
     executorService = Executors.newFixedThreadPool(numOfThreads);
@@ -59,7 +61,7 @@ public class KafkaMessageConsumerConnector implements MessageConsumerConnector {
     TopicMessageConsumer[] consumer = new TopicMessageConsumer[streams.size()] ;
     for (int i = 0; i < streams.size(); i++) {
       KafkaStream<byte[], byte[]> stream = streams.get(i) ;
-      consumer[i] = new TopicMessageConsumer(handler, stream) ; 
+      consumer[i] = new TopicMessageConsumer(topic, handler, stream) ; 
       executorService.submit(consumer[i]);
     }
     
@@ -76,18 +78,22 @@ public class KafkaMessageConsumerConnector implements MessageConsumerConnector {
   }
   
   public void close() {
-    executorService.shutdown() ;
-    consumer.shutdown(); 
+    executorService.shutdownNow() ;
+    consumer.shutdown();
   }
   
   static public class TopicMessageConsumer implements Runnable {
+    private String topic ;
+    private ComponentMonitor monitor; 
     private MessageConsumerHandler handler ;
     private KafkaStream<byte[], byte[]> stream;
     private boolean terminate ;
     
-    public TopicMessageConsumer(MessageConsumerHandler handler, KafkaStream<byte[], byte[]> stream) {
+    public TopicMessageConsumer(String topic, MessageConsumerHandler handler, KafkaStream<byte[], byte[]> stream) {
+      this.topic = topic ;
       this.handler = handler ;
       this.stream = stream;
+      this.monitor = handler.getComponentMonitor(topic) ;
     }
 
     public void setTerminate() {
@@ -97,13 +103,20 @@ public class KafkaMessageConsumerConnector implements MessageConsumerConnector {
     
     public void run() {
       ConsumerIterator<byte[], byte[]> it = stream.iterator();
-      while (it.hasNext()) {
+      while (true) {
         if(terminate) return ;
+        Timer.Context hasNextCtx = monitor.timer("hasNext()").time() ;
+        boolean hasNext = it.hasNext() ;
+        hasNextCtx.stop() ;
+        if(!hasNext) break ;
+        
+        Timer.Context onMessageCtx = monitor.timer("onMessage()").time() ;
         MessageAndMetadata<byte[], byte[]> data = it.next() ;
         byte[] key = data.key() ;
         byte[] mBytes = data.message() ;
         Message message = JSONSerializer.INSTANCE.fromBytes(mBytes, Message.class);
         handler.onMessage(message) ;
+        onMessageCtx.stop() ;
       }
     }
   }

@@ -1,6 +1,5 @@
 package com.neverwinterdp.queuengin.kafka.cluster;
 
-import java.io.FileInputStream;
 import java.io.IOException;
 import java.util.Map;
 import java.util.Properties;
@@ -36,8 +35,10 @@ public class ZookeeperClusterService extends AbstractService {
   @Inject(optional = true) @Named("zookeeper.config-path")
   private String zookeeperConfigPath ;
   
-  @Inject(optional = true) @Named("zkProperties")
-  private Map<String, String> zkOverridedProperties ;
+  //@Inject(optional = true) @Named("zkProperties")
+  //private Map<String, String> zkOverridedProperties ;
+  
+  private ZookeeperClusterServiceInfo serviceInfo ;
   
   private Logger logger ;
   private ZookeeperLaucher launcher ;
@@ -46,6 +47,12 @@ public class ZookeeperClusterService extends AbstractService {
   @Inject
   public void init(LoggerFactory factory) {
     logger = factory.getLogger(getClass().getSimpleName()) ;
+  }
+  
+  @Inject
+  public void init(ZookeeperClusterServiceInfo serviceInfo) {
+    this.serviceInfo = serviceInfo ;
+    getServiceRegistration().setServiceInfo(serviceInfo);
   }
   
   public void start() {
@@ -64,6 +71,7 @@ public class ZookeeperClusterService extends AbstractService {
         zkProperties.setProperty("maxClientCnxns", "0") ;
       }
       //Override the properties
+      Map<String, String> zkOverridedProperties = serviceInfo.getZookeeperOverridedProperties() ;
       logger.info("Overrided zk properties: \n" + JSONSerializer.INSTANCE.toString(zkOverridedProperties));
       if(zkOverridedProperties != null) {
         zkProperties.putAll(zkOverridedProperties);

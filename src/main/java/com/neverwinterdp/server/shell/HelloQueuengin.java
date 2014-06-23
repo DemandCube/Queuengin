@@ -6,6 +6,8 @@ import com.neverwinterdp.message.SampleEvent;
 import com.neverwinterdp.queuengin.MessageConsumerHandler;
 import com.neverwinterdp.queuengin.kafka.KafkaMessageConsumerConnector;
 import com.neverwinterdp.queuengin.kafka.KafkaMessageProducer;
+import com.neverwinterdp.util.monitor.ApplicationMonitor;
+import com.neverwinterdp.util.monitor.ComponentMonitor;
 /**
  * @author Tuan Nguyen
  * @email  tuan08@gmail.com
@@ -50,15 +52,19 @@ public class HelloQueuengin {
   }
   
   static public class HelloProducer implements Runnable {
+    ApplicationMonitor appMonitor ;
     Options opts ;
     int     count ;
-    HelloProducer(Options options) {
+    
+    HelloProducer(ApplicationMonitor appMonitor, Options options) {
+      this.appMonitor = appMonitor ;
       this.opts = options ;
     }
     
     public void run() {
       try {
-        KafkaMessageProducer producer = new KafkaMessageProducer(opts.kafkaConnect) ;
+        ComponentMonitor monitor = appMonitor.createComponentMonitor(KafkaMessageProducer.class);
+        KafkaMessageProducer producer = new KafkaMessageProducer(monitor, opts.kafkaConnect) ;
         for(int i = 0 ; i < opts.numMessage; i++) {
           SampleEvent event = new SampleEvent("event-" + i, "Hello Queuengin " + i) ;
           Message jsonMessage = new Message("m" + i, event, false) ;
@@ -75,9 +81,11 @@ public class HelloQueuengin {
   
   static public class HelloMessageConsumerHandler implements MessageConsumerHandler {
     int count =  0 ;
+    ApplicationMonitor appMonitor ;
     Options opts ;
     
-    HelloMessageConsumerHandler(Options opts) {
+    HelloMessageConsumerHandler(ApplicationMonitor appMonitor, Options opts) {
+      this.appMonitor = appMonitor ;
       this.opts = opts ;
     }
     
@@ -96,18 +104,22 @@ public class HelloQueuengin {
     public void close() {
       System.out.println("Consume " + count + " messages");
     }
+
+    public ComponentMonitor getComponentMonitor(String topic) {
+      return appMonitor.createComponentMonitor("HelloQueuengin", topic);
+    }
   }
   
   public void run(Options options) throws Exception {
+    ApplicationMonitor appMonitor = new ApplicationMonitor("Hello", "localhost") ;
     Thread producerThread = null ;
     HelloProducer helloProducer = null ;
     if(options.produce) {
-      helloProducer = new HelloProducer(options) ;
+      helloProducer = new HelloProducer(appMonitor, options) ;
       producerThread = new Thread(helloProducer) ;
       producerThread.start(); 
     }
-    
-    HelloMessageConsumerHandler  handler = new HelloMessageConsumerHandler(options) ;
+    HelloMessageConsumerHandler  handler = new HelloMessageConsumerHandler(appMonitor, options) ;
     KafkaMessageConsumerConnector consumer = 
         new KafkaMessageConsumerConnector("consumer", options.zkConnect) ;
     consumer.consume(options.topic, handler, 1) ;

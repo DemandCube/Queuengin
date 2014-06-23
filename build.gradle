@@ -51,6 +51,25 @@ test {
   }
 }
 
+task testJar(type: Jar) {
+  classifier = 'tests'
+  from sourceSets.test.output
+}
+
+configurations { 
+  tests 
+  published.extendsFrom tests, archives 
+} 
+
+
+install { 
+  configuration = configurations.published 
+} 
+
+artifacts { 
+  tests testJar 
+} 
+
 task release (dependsOn: 'build') << {
   def releaseDir = "${buildDir}/release/queuengin"
   doRelease(releaseDir)
@@ -76,11 +95,11 @@ def doRelease(String releaseDir) {
 
   def jars = [ 
     "commons.utils", "commons.api", "commons.cluster",
-    "jackson-core-asl", "jackson-mapper-asl", 'jcommander', "reflections", "guava", "javassist",
+    "jackson-core-2.2.2", "jackson-databind", "jackson-annotations", "jcommander", "reflections", "guava", "javassist",
     'guice', 'javax.inject', 'hazelcast', 'aopalliance',
     "kafka", "scala-library",
     'zookeeper', 'zkclient',
-    "metrics-core", "metrics-annotation",
+    "metrics-core", "metrics-json", "metrics-annotation",
     "log4j", "slf4j-api", "slf4j-log4j12"
   ] 
 
