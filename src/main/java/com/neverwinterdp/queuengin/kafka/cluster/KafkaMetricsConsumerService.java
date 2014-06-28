@@ -4,11 +4,9 @@ import org.slf4j.Logger;
 
 import com.google.inject.Inject;
 import com.google.inject.name.Named;
-import com.neverwinterdp.message.Message;
 import com.neverwinterdp.queuengin.MessageConsumerHandler;
 import com.neverwinterdp.queuengin.MetricsConsumerHandler;
 import com.neverwinterdp.queuengin.kafka.KafkaMessageConsumerConnector;
-import com.neverwinterdp.server.cluster.ClusterService;
 import com.neverwinterdp.server.service.AbstractService;
 import com.neverwinterdp.util.LoggerFactory;
 import com.neverwinterdp.util.monitor.ApplicationMonitor;
