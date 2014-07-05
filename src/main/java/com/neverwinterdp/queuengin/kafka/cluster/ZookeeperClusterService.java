@@ -35,9 +35,6 @@ public class ZookeeperClusterService extends AbstractService {
   @Inject(optional = true) @Named("zookeeper.config-path")
   private String zookeeperConfigPath ;
   
-  //@Inject(optional = true) @Named("zkProperties")
-  //private Map<String, String> zkOverridedProperties ;
-  
   private ZookeeperClusterServiceInfo serviceInfo ;
   
   private Logger logger ;

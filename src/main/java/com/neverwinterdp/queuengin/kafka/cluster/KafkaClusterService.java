@@ -80,7 +80,7 @@ public class KafkaClusterService extends AbstractService {
       Properties props = new Properties();
       //props.setProperty("hostname", "127.0.0.1");
       props.setProperty("port", "9092");
-      props.setProperty("broker.id", Integer.toString(1));
+      props.setProperty("broker.id", Integer.toString(Math.abs(rtEnv.getServerName().hashCode())));
       props.setProperty("auto.create.topics.enable", "true");
       props.setProperty("log.dirs", rtEnv.getDataDir() + "/kafka");
       //props.setProperty("enable.zookeeper", "true");
