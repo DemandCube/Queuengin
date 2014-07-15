@@ -1,5 +1,8 @@
 package com.neverwinterdp.queuengin.kafka;
 
+import java.util.HashMap;
+import java.util.Map;
+
 import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.BeforeClass;
@@ -43,14 +46,15 @@ public class QueuenginClusterUnitTest {
     
     int numOfMessages = 10000 ;
     ComponentMonitor producerMonitor = appMonitor.createComponentMonitor("KafkaMessageProducer") ;
-    KafkaMessageProducer producer = new KafkaMessageProducer(producerMonitor, "127.0.0.1:9092") ;
+    Map<String, String> kafkaProducerProps = new HashMap<String, String>() ;
+    kafkaProducerProps.put("request.required.acks", "1");
+    KafkaMessageProducer producer = new KafkaMessageProducer(kafkaProducerProps, producerMonitor, "127.0.0.1:9092") ;
     for(int i = 0 ; i < numOfMessages; i++) {
       //SampleEvent event = new SampleEvent("event-" + i, "event " + i) ;
       Message message = new Message("m" + i, new byte[1024], false) ;
       producer.send(KafkaClusterBuilder.TOPIC,  message) ;
     }
    
-    
     Thread.sleep(2000) ;
     Assert.assertEquals(numOfMessages, handler.messageCount()) ;
     MetricFormater formater = new MetricFormater() ;

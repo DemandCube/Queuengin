@@ -2,6 +2,7 @@ package com.neverwinterdp.queuengin.kafka;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.Properties;
 
 import kafka.javaapi.producer.Producer;
@@ -27,15 +28,23 @@ public class KafkaMessageProducer implements MessageProducer, ComponentMonitorab
   public void setName(String name) { this.name = name; }
 
   public KafkaMessageProducer(ComponentMonitor componentMonitor, String kafkaBrokerUrls) {
+    this(null, componentMonitor, kafkaBrokerUrls) ;
+  }
+  
+  public KafkaMessageProducer(Map<String, String> props, ComponentMonitor componentMonitor, String kafkaBrokerUrls) {
     this.componentMonitor = componentMonitor ;
-    Properties props = new Properties() ;
-    props.put("serializer.class",     "kafka.serializer.StringEncoder");
-    props.put("metadata.broker.list", kafkaBrokerUrls);
-    props.put("partitioner.class", SimplePartitioner.class.getName());
-    props.put("request.required.acks", "1");
-    producer = new Producer<String, String>(new ProducerConfig(props));
+    Properties kafkaProps = new Properties() ;
+    kafkaProps.put("serializer.class",     "kafka.serializer.StringEncoder");
+    kafkaProps.put("partitioner.class", SimplePartitioner.class.getName());
+    kafkaProps.put("request.required.acks", "1");
+    if(props != null) {
+      kafkaProps.putAll(props);
+    }
+    kafkaProps.put("metadata.broker.list", kafkaBrokerUrls);
+    producer = new Producer<String, String>(new ProducerConfig(kafkaProps));
   }
 
+  
   public void send(String topic, Message msg) throws Exception {
     Timer.Context ctx = componentMonitor.timer(topic).time() ;
     String data = JSONSerializer.INSTANCE.toString(msg) ;
