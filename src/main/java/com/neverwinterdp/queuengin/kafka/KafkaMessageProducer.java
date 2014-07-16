@@ -21,6 +21,7 @@ import com.neverwinterdp.util.monitor.ComponentMonitorable;
 public class KafkaMessageProducer implements MessageProducer, ComponentMonitorable {
   private ComponentMonitor componentMonitor ;
   private String name ;
+
   private Producer<String, String> producer;
 
   public String getName() { return name; }
@@ -32,7 +33,6 @@ public class KafkaMessageProducer implements MessageProducer, ComponentMonitorab
     props.put("serializer.class",     "kafka.serializer.StringEncoder");
     props.put("metadata.broker.list", kafkaBrokerUrls);
     props.put("partitioner.class", SimplePartitioner.class.getName());
-    props.put("request.required.acks", "1");
     producer = new Producer<String, String>(new ProducerConfig(props));
   }
 
@@ -43,7 +43,40 @@ public class KafkaMessageProducer implements MessageProducer, ComponentMonitorab
     ctx.stop() ;
   }
   
-  public void send(String topic, List<Message> messages) throws Exception {
+  public KafkaMessageProducer(ComponentMonitor componentMonitor, String kafkaBrokerUrls,
+		  String requiredAcks, String compressionCodec,
+		  String sendBufferBytes, String producerType, String batchNumMessages,
+		  String enqueueTimeout, String clientId, String requestTimeout,
+		  String sendMaxRetries, String retryBackoff) {
+
+    this.componentMonitor = componentMonitor ;
+    Properties props = new Properties() ;
+    props.put("serializer.class",     "kafka.serializer.StringEncoder");
+    props.put("metadata.broker.list", kafkaBrokerUrls);
+    props.put("partitioner.class", SimplePartitioner.class.getName());
+    if(requiredAcks!= null && !requiredAcks.equals(""))
+    	props.put("request.required.acks", requiredAcks);
+    if(compressionCodec!= null && !compressionCodec.equals(""))
+    	props.put("compression.codec", compressionCodec);
+    if(sendBufferBytes!= null && !sendBufferBytes.equals(""))
+    	props.put("send.buffer.bytes",sendBufferBytes);
+    if (producerType!= null && producerType.equals("async")) {
+    	    props.put("producer.type", "async");
+    	    props.put("batch.num.messages", batchNumMessages);
+    	    props.put("queue.enqueue.timeout.ms", enqueueTimeout);
+    }
+    if(clientId!= null && !clientId.equals(""))
+    	props.put("client.id", clientId);
+    if(requestTimeout!= null && !requestTimeout.equals(""))
+    	props.put("request.timeout.ms", requestTimeout);
+    if(sendMaxRetries!= null && !sendMaxRetries.equals(""))
+    	props.put("message.send.max.retries", sendMaxRetries);
+    if(retryBackoff!= null && !retryBackoff.equals(""))
+    	props.put("retry.backoff.ms", retryBackoff);
+    System.out.println("kafka props " +props);
+    producer = new Producer<String, String>(new ProducerConfig(props));
+}
+public void send(String topic, List<Message> messages) throws Exception {
     Timer.Context ctx = componentMonitor.timer(topic).time() ;
     List<KeyedMessage<String, String>> holder = new ArrayList<KeyedMessage<String, String>>() ;
     for(int i = 0; i < messages.size(); i++) {
