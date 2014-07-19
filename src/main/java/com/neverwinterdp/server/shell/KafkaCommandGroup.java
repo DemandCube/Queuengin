@@ -1,21 +1,19 @@
 package com.neverwinterdp.server.shell;
 
-import com.beust.jcommander.Parameters;
-import com.beust.jcommander.ParametersDelegate;
+import com.neverwinterdp.server.gateway.Command;
 
-@CommandGroupConfig(name = "kafka")
-public class KafkaCommandGroup extends CommandGroup {
+@ShellCommandConfig(name = "kafka")
+public class KafkaCommandGroup extends ShellCommand {
   public KafkaCommandGroup() {
     add("hello", HelloQueuenginCommand.class);
   }
   
-  @Parameters(commandDescription = "execute kafka hello command")
-  static public class HelloQueuenginCommand extends Command {
-    @ParametersDelegate
+  static public class HelloQueuenginCommand extends ShellSubCommand  {
     HelloQueuengin.Options options = new HelloQueuengin.Options();
     
-    public void execute(ShellContext ctx) {
+    public void execute(ShellContext ctx, Command command) {
       try {
+        command.mapAll(options);
         new HelloQueuengin().run(options);
       } catch (Exception e) {
         e.printStackTrace();
