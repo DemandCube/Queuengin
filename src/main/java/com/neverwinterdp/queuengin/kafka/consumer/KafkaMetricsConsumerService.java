@@ -1,4 +1,4 @@
-package com.neverwinterdp.queuengin.kafka.cluster;
+package com.neverwinterdp.queuengin.kafka.consumer;
 
 import org.slf4j.Logger;
 

@@ -44,16 +44,19 @@ public class KafkaClusterBuilder {
         
         "module install " +
         " -Pmodule.data.drop=true" +
-        
         " -Pkafka:port=9092 -Pkafka:zookeeper.connect=127.0.0.1:2181 " +
-
-        " --member-role kafka --autostart --module Kafka";
+        " --member-role kafka --autostart --module Kafka \n" +
+        
+        "module install " +
+        " -Pmodule.data.drop=true -Pkafka:zookeeper.connect=127.0.0.1:2181 " +
+        " --member-role kafka --autostart --module KafkaConsumer";
       shell.executeScript(installScript);
       Thread.sleep(1000);
   }
   
   public void uninstall() {
     String uninstallScript = 
+        "module uninstall --member-role kafka --timeout 40000 --module KafkaConsumer \n" +
         "module uninstall --member-role kafka --timeout 40000 --module Kafka \n" +
         "module uninstall --member-role zookeeper --timeout 20000 --module Zookeeper";
     shell.executeScript(uninstallScript);

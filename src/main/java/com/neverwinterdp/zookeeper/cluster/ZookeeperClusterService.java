@@ -1,7 +1,6 @@
-package com.neverwinterdp.queuengin.kafka.cluster;
+package com.neverwinterdp.zookeeper.cluster;
 
 import java.io.IOException;
-import java.util.Map;
 import java.util.Properties;
 
 import org.apache.zookeeper.server.DatadirCleanupManager;
@@ -13,12 +12,9 @@ import org.apache.zookeeper.server.quorum.QuorumPeerMain;
 import org.slf4j.Logger;
 
 import com.google.inject.Inject;
-import com.google.inject.name.Named;
-import com.neverwinterdp.server.RuntimeEnvironment;
 import com.neverwinterdp.server.module.ModuleProperties;
 import com.neverwinterdp.server.service.AbstractService;
 import com.neverwinterdp.util.FileUtil;
-import com.neverwinterdp.util.IOUtil;
 import com.neverwinterdp.util.JSONSerializer;
 import com.neverwinterdp.util.LoggerFactory;
 /**
@@ -26,15 +22,6 @@ import com.neverwinterdp.util.LoggerFactory;
  * @email  tuan08@gmail.com
  */
 public class ZookeeperClusterService extends AbstractService {
-  @Inject
-  private RuntimeEnvironment rtEnvironment ;
-  
-  @Inject
-  private ModuleProperties moduleProperties; 
-  
-  @Inject(optional = true) @Named("zookeeper.config-path")
-  private String zookeeperConfigPath ;
-  
   private ZookeeperClusterServiceInfo serviceInfo ;
   
   private Logger logger ;
@@ -42,49 +29,29 @@ public class ZookeeperClusterService extends AbstractService {
   private Thread zkThread ;
 
   @Inject
-  public void init(LoggerFactory factory) {
+  public void init(LoggerFactory factory, 
+                   ZookeeperClusterServiceInfo serviceInfo,  
+                   ModuleProperties moduleProperties) throws Exception {
     logger = factory.getLogger(getClass().getSimpleName()) ;
+    logger.info("Start init()");
+    this.serviceInfo = serviceInfo ;
+    
+    if(moduleProperties.isDataDrop()) {
+      String dataDir = serviceInfo.zookeeperProperties().getProperty("dataDir") ;
+      FileUtil.removeIfExist(dataDir, false);
+      logger.info("module.data.drop = true, clean data directory");
+    }
+    logger.info("Finish init()");
   }
   
-  @Inject
-  public void init(ZookeeperClusterServiceInfo serviceInfo) {
-    this.serviceInfo = serviceInfo ;
-    getServiceRegistration().setServiceInfo(serviceInfo);
-  }
+  public ZookeeperClusterServiceInfo getServiceInfo() { return this.serviceInfo ; }
   
   public void start() {
     if (launcher != null) {
       throw new IllegalStateException("ZookeeperLaucher should be null");
     }
-    final Properties zkProperties = new Properties();
-    try {
-      if(zookeeperConfigPath != null) {
-        zkProperties.load(IOUtil.loadRes(zookeeperConfigPath));
-      } else {
-        zkProperties.setProperty("dataDir", rtEnvironment.getDataDir()) ;
-        //the port at which the clients will connect
-        zkProperties.setProperty("clientPort", "2181") ;
-        //disable the per-ip limit on the number of connections since this is a non-production config
-        zkProperties.setProperty("maxClientCnxns", "0") ;
-      }
-      //Override the properties
-      Map<String, String> zkOverridedProperties = serviceInfo.getZookeeperOverridedProperties() ;
-      logger.info("Overrided zk properties: \n" + JSONSerializer.INSTANCE.toString(zkOverridedProperties));
-      if(zkOverridedProperties != null) {
-        zkProperties.putAll(zkOverridedProperties);
-      }
-      
-      if(moduleProperties.isDataDrop()) {
-        String dataDir = zkProperties.getProperty("dataDir") ;
-        FileUtil.removeIfExist(dataDir, false);
-        logger.info("module.data.drop = true, clean data directory");
-      }
-      logger.info("zookeeper config properties: \n" + JSONSerializer.INSTANCE.toString(zkProperties));
-    } catch (Exception ex) {
-      logger.error("Cannot lauch the ZookeeperClusterService", ex);
-      return ;
-    }
-    
+    final Properties zkProperties = serviceInfo.zookeeperProperties() ;
+    logger.info("zookeeper config properties: \n" + JSONSerializer.INSTANCE.toString(zkProperties));
     
     zkThread = new Thread() {
       public void run() {
