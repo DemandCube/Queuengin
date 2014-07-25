@@ -76,7 +76,7 @@ module uninstall --member-role kafka --timeout 20000 --module Kafka
 
 To generate the eclipse configuration
 
-1. cd NeverwinterDP/code
+1. cd Queuengin
 2. gradle eclipse
 
 To import the project into the  eclipse
