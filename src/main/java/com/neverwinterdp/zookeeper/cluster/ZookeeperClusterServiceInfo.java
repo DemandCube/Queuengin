@@ -17,11 +17,10 @@ public class ZookeeperClusterServiceInfo extends ServiceInfo implements Serializ
   
   private Map<String, String> defaultProperties = new HashMap<String, String>();
   
-  @Inject(optional = true) @Named("zkProperties")
-  private Map<String, String> zookeeperOverridedProperties = new HashMap<String, String>();
+  private Map<String, String> overridedProperties ;
 
   @Inject
-  public void init(RuntimeEnvironment rtEnvironment) {
+  public void init(RuntimeEnvironment rtEnvironment, @Named("zkProperties") Map<String, String> overridedProperties) {
     defaultProperties.put("dataDir", rtEnvironment.getDataDir()) ;
     //the port at which the clients will connect
     defaultProperties.put("clientPort", "2181") ;
@@ -57,18 +56,18 @@ public class ZookeeperClusterServiceInfo extends ServiceInfo implements Serializ
   }
   
   public Map<String, String> getZookeeperOverridedProperties() {
-    return this.zookeeperOverridedProperties ;
+    return this.overridedProperties ;
   }
   
   public void setZookeeperOverridedProperties(Map<String, String> properties) {
-    this.zookeeperOverridedProperties = properties;
+    this.overridedProperties = properties;
   }
   
   public Properties zookeeperProperties() {
     Properties props = new Properties() ;
     props.putAll(defaultProperties);
-    if(this.zookeeperOverridedProperties != null) {
-      props.putAll(zookeeperOverridedProperties);
+    if(this.overridedProperties != null) {
+      props.putAll(overridedProperties);
     }
     return props ;
   }

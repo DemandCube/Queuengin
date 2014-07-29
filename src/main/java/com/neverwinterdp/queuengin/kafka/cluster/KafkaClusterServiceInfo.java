@@ -12,13 +12,14 @@ import com.neverwinterdp.server.service.ServiceInfo;
 
 public class KafkaClusterServiceInfo extends ServiceInfo implements Serializable {
   private Map<String, String> defaultProperties = new HashMap<String, String>();
-  
-  @Inject(optional = true) @Named("zkProperties")
   private Map<String, String> overridedProperties = new HashMap<String, String>();
 
   @Inject
-  public void init(RuntimeEnvironment rtEnv) {
-  //props.setProperty("hostname", "127.0.0.1");
+  public void init(RuntimeEnvironment rtEnv, 
+                   @Named("kafkaProperties") Map<String, String> overridedProperties) {
+    this.overridedProperties = overridedProperties ;
+    
+    //props.setProperty("hostname", "127.0.0.1");
     defaultProperties.put("port", "9092");
     defaultProperties.put("broker.id", Integer.toString(Math.abs(rtEnv.getServerName().hashCode())));
     defaultProperties.put("auto.create.topics.enable", "true");
@@ -27,9 +28,7 @@ public class KafkaClusterServiceInfo extends ServiceInfo implements Serializable
     defaultProperties.put("zookeeper.connect", "127.0.0.1:2181");
   }
   
-  public Map<String, String> getDefaultProperties() {
-    return defaultProperties ;
-  }
+  public Map<String, String> getDefaultProperties() { return defaultProperties ; }
   
   public Map<String, String> getOverridedProperties() {
     return this.overridedProperties ;
@@ -42,9 +41,7 @@ public class KafkaClusterServiceInfo extends ServiceInfo implements Serializable
   public Properties kafkaProperties() {
     Properties props = new Properties() ;
     props.putAll(defaultProperties);
-    if(this.overridedProperties != null) {
-      props.putAll(overridedProperties);
-    }
+    if(overridedProperties != null) props.putAll(overridedProperties);
     return props ;
   }
 }

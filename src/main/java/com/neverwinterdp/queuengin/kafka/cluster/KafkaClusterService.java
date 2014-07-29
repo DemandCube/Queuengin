@@ -1,6 +1,7 @@
 package com.neverwinterdp.queuengin.kafka.cluster;
 
 import java.io.File;
+import java.util.Map;
 import java.util.Properties;
 
 import kafka.server.KafkaConfig;
@@ -31,19 +32,31 @@ public class KafkaClusterService extends AbstractService {
     logger = factory.getLogger(getClass()) ;
     this.serviceInfo = serviceInfo ;
     if(moduleProperties.isDataDrop()) {
-      String logDir = serviceInfo.kafkaProperties().getProperty("log.dirs") ;
-      FileUtil.removeIfExist(logDir, false);
-      logger.info("module.data.drop = true, clean data directory");
+      cleanup() ;
     }
   }
   
+  public boolean configure(Map<String, String> properties) throws Exception {
+    serviceInfo.getOverridedProperties().putAll(properties);
+    return true ;
+  }
+  
   public KafkaClusterServiceInfo getServiceInfo() { return this.serviceInfo ; }
+  
+  public boolean cleanup() throws Exception {
+    String logDir = serviceInfo.kafkaProperties().getProperty("log.dirs") ;
+    FileUtil.removeIfExist(logDir, false);
+    logger.info("Clean data directory");
+    return true ;
+  }
   
   public void start() throws Exception {
     Properties props = serviceInfo.kafkaProperties();
     String logDir = props.getProperty("log.dirs") ;
     logDir = logDir.replace("/", File.separator) ;
     props.setProperty("log.dirs", logDir) ;
+    
+    logger.info("kafka overrided properties:\n" + JSONSerializer.INSTANCE.toString(serviceInfo.getOverridedProperties()));
     logger.info("kafka properties:\n" + JSONSerializer.INSTANCE.toString(props));
     
     server = new KafkaServer(new KafkaConfig(props), new SystemTime());

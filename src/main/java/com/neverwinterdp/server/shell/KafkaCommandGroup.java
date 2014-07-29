@@ -11,7 +11,7 @@ public class KafkaCommandGroup extends ShellCommand {
   static public class HelloQueuenginCommand extends ShellSubCommand  {
     HelloQueuengin.Options options = new HelloQueuengin.Options();
     
-    public void execute(ShellContext ctx, Command command) {
+    public void execute(Shell shell, ShellContext ctx, Command command) {
       try {
         command.mapAll(options);
         new HelloQueuengin().run(options);
