@@ -32,8 +32,8 @@ dependencies {
   compile group: 'com.neverwinterdp', name: 'commons.utils', version: '1.0-SNAPSHOT'
   compile group: 'com.neverwinterdp', name: 'commons.api', version: '1.0-SNAPSHOT'
   compile group: 'com.neverwinterdp', name: 'commons.cluster', version: '1.0-SNAPSHOT'
+  compile group: 'com.neverwinterdp', name: 'commons.zookeeper', version: '1.0-SNAPSHOT'
 
-  compile group: 'org.apache.zookeeper', name: 'zookeeper', version: project.zookeeperVersion
   compile group: 'org.apache.kafka', name: 'kafka_2.10', version: project.kafkaVersion
 
   compile group: 'org.slf4j', name: 'slf4j-api', version: '1.7.5'
@@ -94,7 +94,7 @@ def doRelease(String releaseDir) {
   }
 
   def jars = [ 
-    "commons.utils", "commons.api", "commons.cluster",
+    "commons.utils", "commons.api", "commons.cluster", 'commons.zookeeper',
     "jackson-core-2.2.2", "jackson-databind", "jackson-annotations", "jcommander", "reflections", "guava", "javassist",
     'guice', 'javax.inject', 'hazelcast', 'aopalliance',
     "kafka", "scala-library",
