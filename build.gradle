@@ -4,6 +4,10 @@ apply plugin: 'maven'
 
 archivesBaseName = 'queuengin'
 
+task wrapper(type: Wrapper) {
+    gradleVersion = '2.0'
+}
+
 eclipse {
   classpath {
     downloadSources=true
