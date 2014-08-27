@@ -23,7 +23,7 @@ public class KafkaMetricsConsumerService extends AbstractService implements Comp
   private KafkaMessageConsumerConnector consumer ;
   private MessageConsumerHandler metricsHandler ;
   
-  @Inject(optional=true) @Named("kafka:zookeeper.connect")
+  @Inject @Named("kafka:zookeeper.connect")
   private String zookeeperUrls = "127.0.0.1:2181";
   
   private String[] topic = { "metrics.consumer" } ;
@@ -46,7 +46,9 @@ public class KafkaMetricsConsumerService extends AbstractService implements Comp
   public void start() throws Exception {
     String consumerGroup = "metrics.consumer";
     int    numberOfThreads = 1 ;
-    
+   
+    logger.info("Zookeeper connect: " + zookeeperUrls) ;
+    logger.info("Listen topic: " + topic) ;
     consumer = new KafkaMessageConsumerConnector(consumerGroup, zookeeperUrls) ;
     for(String selTopic : topic) {
       consumer.consume(selTopic, metricsHandler, numberOfThreads) ;
