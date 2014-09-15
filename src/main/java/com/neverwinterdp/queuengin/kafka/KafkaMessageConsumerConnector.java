@@ -15,12 +15,12 @@ import kafka.consumer.KafkaStream;
 import kafka.javaapi.consumer.ConsumerConnector;
 import kafka.message.MessageAndMetadata;
 
-import com.codahale.metrics.Timer;
 import com.neverwinterdp.message.Message;
 import com.neverwinterdp.queuengin.MessageConsumerConnector;
 import com.neverwinterdp.queuengin.MessageConsumerHandler;
 import com.neverwinterdp.util.JSONSerializer;
-import com.neverwinterdp.util.monitor.ComponentMonitor;
+import com.neverwinterdp.yara.MetricRegistry;
+import com.neverwinterdp.yara.Timer;
 /**
  * @author Tuan Nguyen
  * @email  tuan08@gmail.com
@@ -84,7 +84,7 @@ public class KafkaMessageConsumerConnector implements MessageConsumerConnector {
   
   static public class TopicMessageConsumer implements Runnable {
     private String topic ;
-    private ComponentMonitor monitor; 
+    private MetricRegistry metricRegistry; 
     private MessageConsumerHandler handler ;
     private KafkaStream<byte[], byte[]> stream;
     private boolean terminate ;
@@ -93,7 +93,7 @@ public class KafkaMessageConsumerConnector implements MessageConsumerConnector {
       this.topic = topic ;
       this.handler = handler ;
       this.stream = stream;
-      this.monitor = handler.getComponentMonitor(topic) ;
+      this.metricRegistry = handler.getMetricRegistry() ;
     }
 
     public void setTerminate() {
@@ -105,12 +105,12 @@ public class KafkaMessageConsumerConnector implements MessageConsumerConnector {
       ConsumerIterator<byte[], byte[]> it = stream.iterator();
       while (true) {
         if(terminate) return ;
-        Timer.Context hasNextCtx = monitor.timer("hasNext()").time() ;
+        Timer.Context hasNextCtx = metricRegistry.timer("kafka", "consume", topic, "check").time() ;
         boolean hasNext = it.hasNext() ;
         hasNextCtx.stop() ;
         if(!hasNext) break ;
         
-        Timer.Context onMessageCtx = monitor.timer("onMessage()").time() ;
+        Timer.Context onMessageCtx = metricRegistry.timer("kafka", "consume", topic, "handle").time() ;
         MessageAndMetadata<byte[], byte[]> data = it.next() ;
         byte[] key = data.key() ;
         byte[] mBytes = data.message() ;

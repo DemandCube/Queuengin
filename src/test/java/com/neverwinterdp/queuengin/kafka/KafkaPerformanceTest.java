@@ -8,8 +8,7 @@ import org.junit.BeforeClass;
 import org.junit.Test;
 
 import com.neverwinterdp.message.Message;
-import com.neverwinterdp.util.monitor.ApplicationMonitor;
-import com.neverwinterdp.util.monitor.ComponentMonitor;
+import com.neverwinterdp.yara.MetricRegistry;
 /**
  * @author Tuan Nguyen
  * @email  tuan08@gmail.com
@@ -30,12 +29,11 @@ public class KafkaPerformanceTest {
   @Test
   public void testPerformance() throws Exception {
     clusterBuilder.install() ;
-    ApplicationMonitor appMonitor = new ApplicationMonitor("Test", "localhost") ;
+    MetricRegistry mRegistry = new MetricRegistry("localhost") ;
     int numOfMessages = 1000000 ;
-    ComponentMonitor producerMonitor = appMonitor.createComponentMonitor("KafkaMessageProducer") ;
     Map<String, String> kafkaProducerProps = new HashMap<String, String>() ;
     kafkaProducerProps.put("request.required.acks", "1");
-    KafkaMessageProducer producer = new KafkaMessageProducer(kafkaProducerProps, producerMonitor, "127.0.0.1:9092") ;
+    KafkaMessageProducer producer = new KafkaMessageProducer(kafkaProducerProps, mRegistry, "127.0.0.1:9092") ;
     for(int i = 0 ; i < numOfMessages; i++) {
       Message message = new Message("m" + i, new byte[1024], false) ;
       producer.send(KafkaClusterBuilder.TOPIC,  message) ;

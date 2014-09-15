@@ -26,6 +26,8 @@ public class KafkaClusterServiceInfo extends ServiceInfo implements Serializable
     defaultProperties.put("log.dirs", rtEnv.getDataDir() + "/kafka");
     //props.setProperty("enable.zookeeper", "true");
     defaultProperties.put("zookeeper.connect", "127.0.0.1:2181");
+    defaultProperties.put("controlled.shutdown.enable", "true");
+    defaultProperties.put("auto.leader.rebalance.enable", "true");
   }
   
   public Map<String, String> getDefaultProperties() { return defaultProperties ; }

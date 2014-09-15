@@ -1,7 +1,7 @@
 package com.neverwinterdp.queuengin ;
 
 import com.neverwinterdp.message.Message;
-import com.neverwinterdp.util.monitor.ComponentMonitor;
+import com.neverwinterdp.yara.MetricRegistry;
 /**
  * @author Tuan Nguyen
  * @email  tuan08@gmail.com
@@ -9,5 +9,6 @@ import com.neverwinterdp.util.monitor.ComponentMonitor;
 public interface MessageConsumerHandler {
   public void onMessage(Message message)  ;
   public void onErrorMessage(Message message, Throwable error) ;
-  public ComponentMonitor getComponentMonitor(String topic) ;
+  
+  public MetricRegistry getMetricRegistry() ;
 }

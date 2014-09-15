@@ -38,6 +38,7 @@ dependencies {
   compile group: 'com.neverwinterdp', name: 'commons.api', version: '1.0-SNAPSHOT'
   compile group: 'com.neverwinterdp', name: 'commons.cluster', version: '1.0-SNAPSHOT'
   compile group: 'com.neverwinterdp', name: 'commons.zookeeper', version: '1.0-SNAPSHOT'
+  compile group: 'com.neverwinterdp', name: 'commons.yara', version: '1.0-SNAPSHOT'
 
   compile group: 'org.apache.kafka', name: 'kafka_2.10', version: project.kafkaVersion
 
@@ -109,7 +110,6 @@ def doRelease(String releaseDir) {
     'guice', 'javax.inject', 'hazelcast', 'aopalliance',
     "kafka", "scala-library",
     'zookeeper', 'zkclient',
-    "metrics-core", "metrics-json", "metrics-annotation",
     "log4j", "slf4j-api", "slf4j-log4j12"
   ] 
 

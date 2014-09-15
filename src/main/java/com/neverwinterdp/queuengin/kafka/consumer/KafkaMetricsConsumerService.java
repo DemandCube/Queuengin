@@ -9,15 +9,13 @@ import com.neverwinterdp.queuengin.MetricsConsumerHandler;
 import com.neverwinterdp.queuengin.kafka.KafkaMessageConsumerConnector;
 import com.neverwinterdp.server.service.AbstractService;
 import com.neverwinterdp.util.LoggerFactory;
-import com.neverwinterdp.util.monitor.ApplicationMonitor;
-import com.neverwinterdp.util.monitor.ComponentMonitor;
-import com.neverwinterdp.util.monitor.ComponentMonitorable;
+import com.neverwinterdp.yara.MetricRegistry;
 /**
  * @author Tuan Nguyen
  * @email  tuan08@gmail.com
  */
-public class KafkaMetricsConsumerService extends AbstractService implements ComponentMonitorable {
-  private ComponentMonitor serviceMonitor ;
+public class KafkaMetricsConsumerService extends AbstractService {
+  private MetricRegistry metricRegistry ;
   
   private Logger logger ;
   private KafkaMessageConsumerConnector consumer ;
@@ -30,18 +28,13 @@ public class KafkaMetricsConsumerService extends AbstractService implements Comp
   
   
   @Inject
-  public void init(LoggerFactory factory) {
+  public void init(LoggerFactory factory, MetricRegistry metricRegistry) {
     logger = factory.getLogger(getClass()) ;
+    metricsHandler = new MetricsConsumerHandler("KafkaConsumer", metricRegistry) ;
+    this.metricRegistry = metricRegistry ;
   }
   
-  @Inject
-  public void init(ApplicationMonitor appMonitor) {
-    metricsHandler = new MetricsConsumerHandler("Kafka", appMonitor) ;
-    this.serviceMonitor = appMonitor.createComponentMonitor("Kafka", getClass().getSimpleName()) ;
-  }
-  
-
-  public ComponentMonitor getComponentMonitor() { return serviceMonitor ; }
+  public MetricRegistry getMetricRegistry() { return metricRegistry ; }
   
   public void start() throws Exception {
     String consumerGroup = "metrics.consumer";

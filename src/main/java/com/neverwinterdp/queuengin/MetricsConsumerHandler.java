@@ -1,8 +1,7 @@
 package com.neverwinterdp.queuengin;
 
 import com.neverwinterdp.message.Message;
-import com.neverwinterdp.util.monitor.ApplicationMonitor;
-import com.neverwinterdp.util.monitor.ComponentMonitor;
+import com.neverwinterdp.yara.MetricRegistry;
 /**
  * @author Tuan Nguyen
  * @email  tuan08@gmail.com
@@ -11,11 +10,11 @@ public class MetricsConsumerHandler implements MessageConsumerHandler {
   private int count =  0 ;
   private int errorCount = 0;
   private String module ;
-  private ApplicationMonitor appMonitor ;
+  private MetricRegistry metricRegistry ;
   
-  public MetricsConsumerHandler(String module, ApplicationMonitor monitor) {
+  public MetricsConsumerHandler(String module, MetricRegistry registry) {
     this.module = module ;
-    this.appMonitor = monitor ;
+    this.metricRegistry = registry ;
   }
   
   public int messageCount() { return count ; }
@@ -30,7 +29,5 @@ public class MetricsConsumerHandler implements MessageConsumerHandler {
     errorCount++ ;
   }
   
-  public ComponentMonitor getComponentMonitor(String topic) {
-    return appMonitor.createComponentMonitor(module, getClass().getSimpleName(), topic);
-  }
+  public MetricRegistry getMetricRegistry() { return metricRegistry; }
 }

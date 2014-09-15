@@ -49,7 +49,7 @@ public class KafkaClusterBuilder {
         
         "module install " +
         " -Pmodule.data.drop=true -Pkafka:zookeeper.connect=127.0.0.1:2181 " +
-        " --member-role kafka --autostart --module KafkaConsumer";
+        " --member-role kafka --autostart --module KafkaConsumer" ;
       shell.executeScript(installScript);
       Thread.sleep(1000);
   }

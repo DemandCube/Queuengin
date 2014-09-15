@@ -6,8 +6,7 @@ import com.neverwinterdp.message.SampleEvent;
 import com.neverwinterdp.queuengin.MessageConsumerHandler;
 import com.neverwinterdp.queuengin.kafka.KafkaMessageConsumerConnector;
 import com.neverwinterdp.queuengin.kafka.KafkaMessageProducer;
-import com.neverwinterdp.util.monitor.ApplicationMonitor;
-import com.neverwinterdp.util.monitor.ComponentMonitor;
+import com.neverwinterdp.yara.MetricRegistry;
 /**
  * @author Tuan Nguyen
  * @email  tuan08@gmail.com
@@ -52,19 +51,18 @@ public class HelloQueuengin {
   }
   
   static public class HelloProducer implements Runnable {
-    ApplicationMonitor appMonitor ;
+    MetricRegistry metricRegistry ;
     Options opts ;
     int     count ;
     
-    HelloProducer(ApplicationMonitor appMonitor, Options options) {
-      this.appMonitor = appMonitor ;
+    HelloProducer(MetricRegistry metricRegistry, Options options) {
+      this.metricRegistry = metricRegistry ;
       this.opts = options ;
     }
     
     public void run() {
       try {
-        ComponentMonitor monitor = appMonitor.createComponentMonitor(KafkaMessageProducer.class);
-        KafkaMessageProducer producer = new KafkaMessageProducer(monitor, opts.kafkaConnect) ;
+        KafkaMessageProducer producer = new KafkaMessageProducer(metricRegistry, opts.kafkaConnect) ;
         for(int i = 0 ; i < opts.numMessage; i++) {
           SampleEvent event = new SampleEvent("event-" + i, "Hello Queuengin " + i) ;
           Message jsonMessage = new Message("m" + i, event, false) ;
@@ -81,10 +79,10 @@ public class HelloQueuengin {
   
   static public class HelloMessageConsumerHandler implements MessageConsumerHandler {
     int count =  0 ;
-    ApplicationMonitor appMonitor ;
+    MetricRegistry appMonitor ;
     Options opts ;
     
-    HelloMessageConsumerHandler(ApplicationMonitor appMonitor, Options opts) {
+    HelloMessageConsumerHandler(MetricRegistry appMonitor, Options opts) {
       this.appMonitor = appMonitor ;
       this.opts = opts ;
     }
@@ -105,13 +103,11 @@ public class HelloQueuengin {
       System.out.println("Consume " + count + " messages");
     }
 
-    public ComponentMonitor getComponentMonitor(String topic) {
-      return appMonitor.createComponentMonitor("HelloQueuengin", topic);
-    }
+    public MetricRegistry getMetricRegistry() { return appMonitor; }
   }
   
   public void run(Options options) throws Exception {
-    ApplicationMonitor appMonitor = new ApplicationMonitor("Hello", "localhost") ;
+    MetricRegistry appMonitor = new MetricRegistry("localhost") ;
     Thread producerThread = null ;
     HelloProducer helloProducer = null ;
     if(options.produce) {
