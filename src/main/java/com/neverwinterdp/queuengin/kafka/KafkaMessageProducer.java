@@ -36,10 +36,10 @@ public class KafkaMessageProducer implements MessageProducer {
     kafkaProps.put("serializer.class",  "kafka.serializer.StringEncoder");
     kafkaProps.put("partitioner.class", SimplePartitioner.class.getName());
     kafkaProps.put("request.required.acks", "1");
+    kafkaProps.put("metadata.broker.list", kafkaBrokerUrls);
     if(props != null) {
       kafkaProps.putAll(props);
     }
-    kafkaProps.put("metadata.broker.list", kafkaBrokerUrls);
     producer = new Producer<String, String>(new ProducerConfig(kafkaProps));
   }
 
