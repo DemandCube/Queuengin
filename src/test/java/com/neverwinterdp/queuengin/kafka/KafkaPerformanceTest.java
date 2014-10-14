@@ -30,7 +30,7 @@ public class KafkaPerformanceTest {
   public void testPerformance() throws Exception {
     clusterBuilder.install() ;
     MetricRegistry mRegistry = new MetricRegistry("localhost") ;
-    int numOfMessages = 1000000 ;
+    int numOfMessages = 10000 ;
     Map<String, String> kafkaProducerProps = new HashMap<String, String>() ;
     kafkaProducerProps.put("request.required.acks", "1");
     KafkaMessageProducer producer = new KafkaMessageProducer(kafkaProducerProps, mRegistry, "127.0.0.1:9092") ;
@@ -39,8 +39,9 @@ public class KafkaPerformanceTest {
       producer.send(KafkaClusterBuilder.TOPIC,  message) ;
     }
    
+    producer.close();
     Thread.sleep(2000) ;
     clusterBuilder.getShell().execute("server metric");
-    producer.close();
+    clusterBuilder.uninstall();
   }
 }

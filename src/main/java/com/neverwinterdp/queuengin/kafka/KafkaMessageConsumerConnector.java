@@ -26,18 +26,11 @@ import com.neverwinterdp.yara.Timer;
  * @email  tuan08@gmail.com
  */
 public class KafkaMessageConsumerConnector implements MessageConsumerConnector {
-  private int numberOfThreads ;
   private ExecutorService executorService ;
   private  ConsumerConnector consumer;
   private Map<String, TopicMessageConsumers> topicConsumers = new ConcurrentHashMap<String, TopicMessageConsumers>() ;
   
   public KafkaMessageConsumerConnector(String group, String zkConnectUrls) {
-    this(group, zkConnectUrls, 1) ;
-  }
-  
-  public KafkaMessageConsumerConnector(String group, String zkConnectUrls, int numOfThreads) {
-    this.numberOfThreads = numOfThreads ;
-    
     Properties props = new Properties();
     props.put("group.id", group);
     props.put("zookeeper.connect", zkConnectUrls);
@@ -47,13 +40,12 @@ public class KafkaMessageConsumerConnector implements MessageConsumerConnector {
     props.put("auto.commit.enable", "true");
     props.put("auto.offset.reset", "smallest");
     
-    executorService = Executors.newFixedThreadPool(numOfThreads);
     ConsumerConfig config = new ConsumerConfig(props);
     consumer = kafka.consumer.Consumer.createJavaConsumerConnector(config);
   }
 
   synchronized public void consume(String topic, MessageConsumerHandler handler, int numOfThreads) throws IOException {
-    if(numOfThreads > this.numberOfThreads) numOfThreads = this.numberOfThreads ;
+    executorService = Executors.newFixedThreadPool(numOfThreads);
     Map<String, Integer> topicCountMap = new HashMap<String, Integer>();
     topicCountMap.put(topic, numOfThreads);
     Map<String, List<KafkaStream<byte[], byte[]>>> consumerMap = consumer.createMessageStreams(topicCountMap);
@@ -67,6 +59,26 @@ public class KafkaMessageConsumerConnector implements MessageConsumerConnector {
     
     TopicMessageConsumers topicConsumer = new TopicMessageConsumers(topic, consumer) ;
     topicConsumers.put(topic, topicConsumer) ;
+  }
+  
+  synchronized public void consume(String[] topic, MessageConsumerHandler handler, int numOfThreads) throws IOException {
+    executorService = Executors.newFixedThreadPool(topic.length * numOfThreads);
+    Map<String, Integer> topicCountMap = new HashMap<String, Integer>();
+    for(int i = 0; i < topic.length; i++) {
+      topicCountMap.put(topic[i], numOfThreads);
+    }
+    
+    Map<String, List<KafkaStream<byte[], byte[]>>> consumerMap = consumer.createMessageStreams(topicCountMap);
+    for(int k = 0; k < topic.length; k++) {
+      List<KafkaStream<byte[], byte[]>> streams = consumerMap.get(topic[k]);
+      TopicMessageConsumer[] consumer = new TopicMessageConsumer[streams.size()] ;
+      for (int i = 0; i < streams.size(); i++) {
+        KafkaStream<byte[], byte[]> stream = streams.get(i) ;
+        consumer[i] = new TopicMessageConsumer(topic[k], handler, stream) ; 
+        executorService.submit(consumer[i]);
+      }
+      topicConsumers.put(topic[k], new TopicMessageConsumers(topic[k], consumer)) ;
+    }
   }
   
   synchronized public void remove(String topic) {

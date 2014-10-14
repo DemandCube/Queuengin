@@ -21,6 +21,7 @@ import com.neverwinterdp.yara.Timer;
 public class KafkaMessageProducer implements MessageProducer {
   private MetricRegistry metricRegistry ;
   private String name ;
+  private Properties kafkaProperties ;
   private Producer<String, String> producer;
 
   public String getName() { return name; }
@@ -40,9 +41,14 @@ public class KafkaMessageProducer implements MessageProducer {
     if(props != null) {
       kafkaProps.putAll(props);
     }
-    producer = new Producer<String, String>(new ProducerConfig(kafkaProps));
+    this.kafkaProperties = kafkaProps ;
+    reconnect() ;
   }
 
+  public void reconnect() {
+    if(producer != null) producer.close(); 
+    producer = new Producer<String, String>(new ProducerConfig(kafkaProperties));
+  }
   
   public void send(String topic, Message msg) throws Exception {
     Timer.Context ctx = metricRegistry.timer("kafka", "produce", topic, "send").time() ;

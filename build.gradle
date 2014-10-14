@@ -92,11 +92,13 @@ def doRelease(String releaseDir) {
   println "Preparing the release directory ${releaseDir}"
   println "*************************************************"
 
+  /*
   println "Copying kafka_2.8.0-0.8.1.1 to the release directory"
   copy {
     from "${buildDir}/../../../../NeverwinterDP-dependencies/kafka_2.8.0-0.8.1.1"
     into "${releaseDir}"
   }
+  */
 
   println "Patch kafka_2.8.0-0.8.1.1 with the custom script"
   copy {
